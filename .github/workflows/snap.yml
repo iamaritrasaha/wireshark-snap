@@ -3,7 +3,11 @@ name: Build and test Wireshark Snap
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Parse and inspect snapcraft.yaml
         shell: bash
@@ -36,12 +40,14 @@ jobs:
           expected = "sha256/c0f1ccf217bc0d3b51a9c03ea178b0f7df682e475da26a2d21cd4a1bdd9579d0"
           raise "source checksum is not pinned" unless checksum == expected
           raise "official Qt integration is missing" unless data.dig("apps", "wireshark", "extensions").include?("kde-neon-6")
-          %w[wireshark tshark dumpcap capinfos editcap mergecap text2pcap reordercap].each do |app|
-            raise "missing app #{app}" unless data.fetch("apps").key?(app)
+          expected_apps = %w[wireshark tshark dumpcap capinfos editcap mergecap text2pcap reordercap]
+          expected_apps.each do |app|
+            metadata = data.fetch("apps").fetch(app) { raise "missing app #{app}" }
+            raise "premature Store alias request for #{app}" if metadata.key?("aliases")
           end
-          forbidden = data.fetch("apps").values.flat_map { |app| Array(app["plugs"]) }
-          raise "broad capture interface added without evidence" if forbidden.include?("network-control")
-          raise "classic confinement is forbidden" if data.fetch("confinement") == "classic"
+          plugs = data.fetch("apps").values.flat_map { |app| Array(app["plugs"]) }
+          privileged = %w[network-control network-observe hardware-observe system-observe process-control]
+          raise "privileged interface added without evidence" unless (plugs & privileged).empty?
           puts "snapcraft metadata checks passed"
           RUBY
           test ! -e parts
@@ -49,8 +55,36 @@ jobs:
           test ! -e stage
           git diff --check
 
+      - name: Verify signed upstream provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROVENANCE_DIR="$RUNNER_TEMP/wireshark-provenance"
+          GNUPGHOME="$PROVENANCE_DIR/gnupg"
+          mkdir -m 700 -p "$GNUPGHOME"
+          export GNUPGHOME
+          curl --fail --silent --show-error --location \
+            --output "$PROVENANCE_DIR/SIGNATURES-4.6.8.txt" \
+            https://www.wireshark.org/download/SIGNATURES-4.6.8.txt
+          curl --fail --silent --show-error --location \
+            --output "$PROVENANCE_DIR/gerald_at_wireshark_dot_org.gpg" \
+            https://www.wireshark.org/download/gerald_at_wireshark_dot_org.gpg
+          fingerprint="$(gpg --batch --show-keys --with-colons \
+            "$PROVENANCE_DIR/gerald_at_wireshark_dot_org.gpg" | awk -F: '$1 == "fpr" {print $10; exit}')"
+          test "$fingerprint" = 5A5ADBA7DBEA6C3F87224F1982244A78E6FEAEEA
+          gpg --batch --import "$PROVENANCE_DIR/gerald_at_wireshark_dot_org.gpg"
+          gpg --batch --verify "$PROVENANCE_DIR/SIGNATURES-4.6.8.txt"
+          grep -Fx 'wireshark-4.6.8.tar.xz: 56464692 bytes' \
+            "$PROVENANCE_DIR/SIGNATURES-4.6.8.txt"
+          grep -Fx 'SHA256(wireshark-4.6.8.tar.xz)=c0f1ccf217bc0d3b51a9c03ea178b0f7df682e475da26a2d21cd4a1bdd9579d0' \
+            "$PROVENANCE_DIR/SIGNATURES-4.6.8.txt"
+
       - name: Verify deterministic test fixture generator
-        run: python3 tests/generate_pcapng.py "$RUNNER_TEMP/minimal.pcapng"
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/generate_pcapng.py "$RUNNER_TEMP/minimal.pcapng"
+          test "$(stat -c %s "$RUNNER_TEMP/minimal.pcapng")" -eq 124
 
   build:
     name: Build Snap
@@ -58,11 +92,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build with Snapcraft
         id: snapcraft
-        uses: snapcore/action-build@v1
+        uses: canonical/action-build@v1.3.0
 
       - name: Record artifact metadata
         shell: bash
@@ -77,10 +111,10 @@ jobs:
             printf 'sha256='
             sha256sum "$SNAP_FILE" | awk '{print $1}'
           } | tee snap-build-metadata.txt
-          echo "Built $SNAP_FILE"
+          cat snap-build-metadata.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Snap artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SNAP_ARTIFACT }}
           path: |
@@ -95,7 +129,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Download exact build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.SNAP_ARTIFACT }}
           path: artifact
@@ -106,23 +140,29 @@ jobs:
           set -euo pipefail
           SNAP_FILE="$(find artifact -maxdepth 1 -type f -name '*.snap' -print -quit)"
           test -n "$SNAP_FILE"
-          sha256sum "$SNAP_FILE"
+          expected_sha="$(awk -F= '$1 == "sha256" {print $2}' artifact/snap-build-metadata.txt)"
+          test "$(sha256sum "$SNAP_FILE" | awk '{print $1}')" = "$expected_sha"
           sudo snap install "$SNAP_FILE" --dangerous
           snap list wireshark
-          snap connections wireshark | tee "$RUNNER_TEMP/install-connections.txt"
+          snap connections wireshark
           test "$(snap list wireshark | awk 'NR == 2 {print $1}')" = wireshark
-          sudo snap remove wireshark
+
+      - name: Remove installed Snap
+        if: always()
+        run: sudo snap remove --purge wireshark || true
 
   smoke:
     name: Smoke test installed Snap
     needs: build
     runs-on: ubuntu-24.04
+    env:
+      EVIDENCE_DIR: ${{ runner.temp }}/wireshark-smoke-evidence
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download exact build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.SNAP_ARTIFACT }}
           path: artifact
@@ -131,46 +171,102 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
           SNAP_FILE="$(find artifact -maxdepth 1 -type f -name '*.snap' -print -quit)"
           test -n "$SNAP_FILE"
-          sha256sum "$SNAP_FILE" | tee "$RUNNER_TEMP/smoke-artifact-sha256.txt"
+          sha256sum "$SNAP_FILE" | tee "$EVIDENCE_DIR/smoke-artifact-sha256.txt"
+          diff -u artifact/snap-build-metadata.txt <(
+            printf 'filename=%s\n' "$(basename "$SNAP_FILE")"
+            printf 'size_bytes=%s\n' "$(stat -c %s "$SNAP_FILE")"
+            printf 'sha256='; sha256sum "$SNAP_FILE" | awk '{print $1}'
+          )
           sudo snap install "$SNAP_FILE" --dangerous
 
-      - name: Verify installed layout, versions, metadata, and utilities
+      - name: Verify installed layout, versions, metadata, and privileges
         shell: bash
         run: |
           set -euo pipefail
           SNAP_ROOT="$(readlink -f /snap/wireshark/current)"
-          snap list wireshark | tee "$RUNNER_TEMP/snap-list.txt"
-          snap connections wireshark | tee "$RUNNER_TEMP/snap-connections.txt"
-          for tool in wireshark tshark dumpcap capinfos editcap mergecap text2pcap reordercap; do
-            test -x "$SNAP_ROOT/usr/bin/$tool"
-            "$tool" --version | tee "$RUNNER_TEMP/$tool-version.txt"
-          done
-          test -f "$SNAP_ROOT/usr/share/applications/org.wireshark.Wireshark.desktop"
-          grep -E '^Exec=wireshark %F$' "$SNAP_ROOT/usr/share/applications/org.wireshark.Wireshark.desktop"
-          grep -E '^MimeType=.*application/vnd.tcpdump.pcap' "$SNAP_ROOT/usr/share/applications/org.wireshark.Wireshark.desktop"
-          test -x "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/wireshark/plugins/4.6.8/epan/ethercat.so" || \
-            find "$SNAP_ROOT/usr/lib" -path '*/wireshark/plugins/*' -type f -print -quit | grep .
-          find "$SNAP_ROOT/usr" -path '*/wireshark/extcap/*' -type f -print -quit | grep .
+          snap list wireshark | tee "$EVIDENCE_DIR/snap-list.txt"
+          snap connections wireshark | tee "$EVIDENCE_DIR/snap-connections.txt"
+          snap aliases wireshark | tee "$EVIDENCE_DIR/snap-aliases.txt"
 
-      - name: Parse deterministic pcapng fixture
+          test -x /snap/bin/wireshark
+          wireshark --version | tee "$EVIDENCE_DIR/wireshark-version.txt"
+          for tool in tshark dumpcap capinfos editcap mergecap text2pcap reordercap; do
+            test -x "$SNAP_ROOT/usr/bin/$tool"
+            test -x "/snap/bin/wireshark.$tool"
+            "wireshark.$tool" --version | tee "$EVIDENCE_DIR/$tool-version.txt"
+          done
+
+          DESKTOP="$SNAP_ROOT/usr/share/applications/org.wireshark.Wireshark.desktop"
+          test -f "$DESKTOP"
+          grep -Fx 'Exec=wireshark %f' "$DESKTOP"
+          grep -E '^Categories=.*Network;.*Monitor;.*Qt;' "$DESKTOP"
+          grep -E '^MimeType=.*application/vnd.tcpdump.pcap' "$DESKTOP"
+          grep -E '^MimeType=.*application/x-pcapng' "$DESKTOP"
+          test -f "$SNAP_ROOT/usr/share/icons/hicolor/256x256/apps/org.wireshark.Wireshark.png"
+          test -f "$SNAP_ROOT/usr/share/doc/wireshark/COPYING"
+
+          find "$SNAP_ROOT/usr/lib" -path '*/wireshark/plugins/4.6/*' -type f -print \
+            | tee "$EVIDENCE_DIR/plugin-files.txt"
+          test -s "$EVIDENCE_DIR/plugin-files.txt"
+          find "$SNAP_ROOT/usr/libexec/wireshark/extcap" -type f -perm -111 -print \
+            | tee "$EVIDENCE_DIR/extcap-files.txt"
+          test -s "$EVIDENCE_DIR/extcap-files.txt"
+
+          find "$SNAP_ROOT" -xdev -type f \( -perm -4000 -o -perm -2000 \) -print \
+            | tee "$EVIDENCE_DIR/setid-files.txt"
+          test ! -s "$EVIDENCE_DIR/setid-files.txt"
+          stat -c 'dumpcap_mode=%a dumpcap_owner=%U:%G' "$SNAP_ROOT/usr/bin/dumpcap" \
+            | tee "$EVIDENCE_DIR/dumpcap-privileges.txt"
+          id | tee "$EVIDENCE_DIR/execution-identity.txt"
+          if command -v getcap >/dev/null; then
+            getcap -r "$SNAP_ROOT" 2>/dev/null | tee "$EVIDENCE_DIR/file-capabilities.txt"
+            test ! -s "$EVIDENCE_DIR/file-capabilities.txt"
+          fi
+
+      - name: Verify dissectors, plugins, and capture-file parsing
         shell: bash
         run: |
           set -euo pipefail
-          FIXTURE="$RUNNER_TEMP/minimal.pcapng"
+          FIXTURE="$EVIDENCE_DIR/minimal.pcapng"
+          PCAP_FIXTURE="$EVIDENCE_DIR/minimal.pcap"
           python3 tests/generate_pcapng.py "$FIXTURE"
-          capinfos "$FIXTURE" | tee "$RUNNER_TEMP/capinfos.txt"
-          test "$(tshark -r "$FIXTURE" -T fields -e frame.number -e ip.src -e udp.dstport)" = $'1\t192.0.2.1\t53'
-          tshark -G protocols | grep -E '^eth[[:space:]]|^ip[[:space:]]|^udp[[:space:]]'
-          editcap "$FIXTURE" "$RUNNER_TEMP/edited.pcapng"
-          mergecap -w "$RUNNER_TEMP/merged.pcapng" "$FIXTURE" "$FIXTURE"
-          reordercap "$FIXTURE" "$RUNNER_TEMP/reordered.pcapng"
-          printf '000000 00 11 22 33 44 55 66 77 88 99 aa bb 08 00\n' | \
-            text2pcap -l 1 - "$RUNNER_TEMP/text2pcap.pcap"
-          capinfos "$RUNNER_TEMP/text2pcap.pcap" | grep -E 'File type|Number of packets'
 
-      - name: Exercise GUI startup under Xvfb
+          wireshark.tshark -G protocols > "$EVIDENCE_DIR/protocols.txt"
+          for protocol in eth ip udp; do
+            awk -F '\t' -v protocol="$protocol" \
+              '$3 == protocol {found = 1} END {exit !found}' "$EVIDENCE_DIR/protocols.txt"
+          done
+          wireshark.tshark -G plugins | tee "$EVIDENCE_DIR/plugins.txt"
+          awk -F '\t' '$1 == "ethercat.so" && $3 == "dissector" {found = 1} END {exit !found}' \
+            "$EVIDENCE_DIR/plugins.txt"
+
+          wireshark.capinfos "$FIXTURE" | tee "$EVIDENCE_DIR/capinfos-pcapng.txt"
+          expected=$'1\t192.0.2.1\t53'
+          actual="$(wireshark.tshark -n -r "$FIXTURE" -T fields \
+            -e frame.number -e ip.src -e udp.dstport)"
+          test "$actual" = "$expected"
+
+          wireshark.editcap -F pcap "$FIXTURE" "$PCAP_FIXTURE"
+          actual="$(wireshark.tshark -n -r "$PCAP_FIXTURE" -T fields \
+            -e frame.number -e ip.src -e udp.dstport)"
+          test "$actual" = "$expected"
+          wireshark.capinfos "$PCAP_FIXTURE" | tee "$EVIDENCE_DIR/capinfos-pcap.txt"
+
+          wireshark.mergecap -w "$EVIDENCE_DIR/merged.pcapng" "$FIXTURE" "$FIXTURE"
+          wireshark.capinfos -c "$EVIDENCE_DIR/merged.pcapng" | grep -E 'Number of packets:[[:space:]]+2'
+          wireshark.reordercap "$FIXTURE" "$EVIDENCE_DIR/reordered.pcapng"
+          actual="$(wireshark.tshark -n -r "$EVIDENCE_DIR/reordered.pcapng" -T fields \
+            -e frame.number -e ip.src -e udp.dstport)"
+          test "$actual" = "$expected"
+          printf '000000 00 11 22 33 44 55 66 77 88 99 aa bb 08 00\n' | \
+            wireshark.text2pcap -l 1 - "$EVIDENCE_DIR/text2pcap.pcap"
+          wireshark.capinfos -c "$EVIDENCE_DIR/text2pcap.pcap" \
+            | grep -E 'Number of packets:[[:space:]]+1'
+
+      - name: Exercise GUI opening the fixture under Xvfb
         shell: bash
         run: |
           set -euo pipefail
@@ -178,13 +274,15 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y xvfb
           }
+          mkdir -p "$EVIDENCE_DIR/gui-home" "$EVIDENCE_DIR/gui-config"
           set +e
-          timeout --signal=TERM 12s xvfb-run -a env HOME="$RUNNER_TEMP/gui-home" \
-            XDG_CONFIG_HOME="$RUNNER_TEMP/gui-config" wireshark --no-splash \
-            >"$RUNNER_TEMP/wireshark-gui.log" 2>&1
+          timeout --signal=TERM 12s xvfb-run -a env HOME="$EVIDENCE_DIR/gui-home" \
+            XDG_CONFIG_HOME="$EVIDENCE_DIR/gui-config" wireshark --no-splash \
+            -r "$EVIDENCE_DIR/minimal.pcapng" >"$EVIDENCE_DIR/wireshark-gui.log" 2>&1
           status=$?
           set -e
-          cat "$RUNNER_TEMP/wireshark-gui.log"
+          cat "$EVIDENCE_DIR/wireshark-gui.log"
+          echo "gui_status=$status" | tee "$EVIDENCE_DIR/gui-status.txt"
           case "$status" in
             0|124|143) ;;
             *) echo "Wireshark GUI exited during startup with status $status" >&2; exit "$status" ;;
@@ -195,39 +293,40 @@ jobs:
         run: |
           set -euo pipefail
           set +e
-          dumpcap -D >"$RUNNER_TEMP/dumpcap-interfaces.txt" 2>&1
+          wireshark.dumpcap -D >"$EVIDENCE_DIR/dumpcap-interfaces.txt" 2>&1
           dumpcap_status=$?
-          tshark -D >"$RUNNER_TEMP/tshark-interfaces.txt" 2>&1
+          wireshark.tshark -D >"$EVIDENCE_DIR/tshark-interfaces.txt" 2>&1
           tshark_status=$?
           set -e
-          cat "$RUNNER_TEMP/dumpcap-interfaces.txt"
-          cat "$RUNNER_TEMP/tshark-interfaces.txt"
+          cat "$EVIDENCE_DIR/dumpcap-interfaces.txt"
+          cat "$EVIDENCE_DIR/tshark-interfaces.txt"
           {
             echo "dumpcap_interface_status=$dumpcap_status"
             echo "tshark_interface_status=$tshark_status"
-          } | tee "$RUNNER_TEMP/interface-status.txt"
+          } | tee "$EVIDENCE_DIR/interface-status.txt"
 
-          if [ "$dumpcap_status" -eq 0 ] && grep -Eq '(^|[.] )[[:space:]]*lo([[:space:]]|$)' "$RUNNER_TEMP/dumpcap-interfaces.txt"; then
+          if [ "$dumpcap_status" -eq 0 ] && \
+             grep -Eq '^[0-9]+[.] lo([[:space:]]|$)' "$EVIDENCE_DIR/dumpcap-interfaces.txt"; then
             set +e
-            timeout 6s dumpcap -i lo -c 1 -w "$RUNNER_TEMP/loopback.pcapng" \
-              >"$RUNNER_TEMP/live-capture.log" 2>&1 &
+            timeout 6s wireshark.dumpcap -i lo -c 1 -w "$EVIDENCE_DIR/loopback.pcapng" \
+              >"$EVIDENCE_DIR/live-capture.log" 2>&1 &
             capture_pid=$!
             sleep 1
             python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect_ex(("127.0.0.1", 9)); s.close()'
             wait "$capture_pid"
             capture_status=$?
             set -e
-            cat "$RUNNER_TEMP/live-capture.log"
-            echo "loopback_capture_status=$capture_status" | tee -a "$RUNNER_TEMP/interface-status.txt"
-            if [ "$capture_status" -eq 0 ] && [ -s "$RUNNER_TEMP/loopback.pcapng" ]; then
-              capinfos "$RUNNER_TEMP/loopback.pcapng"
-              echo "live_capture=passed" | tee -a "$RUNNER_TEMP/interface-status.txt"
+            cat "$EVIDENCE_DIR/live-capture.log"
+            echo "loopback_capture_status=$capture_status" | tee -a "$EVIDENCE_DIR/interface-status.txt"
+            if [ "$capture_status" -eq 0 ] && [ -s "$EVIDENCE_DIR/loopback.pcapng" ]; then
+              wireshark.capinfos "$EVIDENCE_DIR/loopback.pcapng"
+              echo "live_capture=passed" | tee -a "$EVIDENCE_DIR/interface-status.txt"
             else
-              echo "live_capture=not-proven-in-strict-ci" | tee -a "$RUNNER_TEMP/interface-status.txt"
+              echo "live_capture=not-proven-in-strict-ci" | tee -a "$EVIDENCE_DIR/interface-status.txt"
               echo "::warning::Strict live capture was not proven on this GitHub-hosted runner."
             fi
           else
-            echo "live_capture=not-proven-in-strict-ci" | tee -a "$RUNNER_TEMP/interface-status.txt"
+            echo "live_capture=not-proven-in-strict-ci" | tee -a "$EVIDENCE_DIR/interface-status.txt"
             echo "::warning::Interface enumeration was unavailable in strict CI; no capture privilege was added."
           fi
 
@@ -236,26 +335,28 @@ jobs:
         shell: bash
         run: |
           set +e
-          sudo journalctl -k --no-pager -b | grep -iE 'apparmor=.*(wireshark|tshark|dumpcap)|audit:.*(wireshark|tshark|dumpcap)' \
-            | tee "$RUNNER_TEMP/apparmor-observations.txt"
-          status=${PIPESTATUS[0]}
+          sudo journalctl -k --no-pager -b \
+            | grep -iE 'apparmor="DENIED".*(snap[.]wireshark|wireshark|tshark|dumpcap)' \
+            | tee "$EVIDENCE_DIR/apparmor-denials.txt"
+          status=${PIPESTATUS[1]}
           set -e
           if [ "$status" -ne 0 ]; then
-            echo "No matching AppArmor denial was emitted by the runner kernel." | tee "$RUNNER_TEMP/apparmor-observations.txt"
+            echo "No matching AppArmor denial was emitted by the runner kernel." \
+              | tee "$EVIDENCE_DIR/apparmor-denials.txt"
           fi
 
       - name: Upload smoke evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wireshark-smoke-evidence-${{ github.sha }}
-          path: ${{ runner.temp }}/*
-          if-no-files-found: ignore
+          path: ${{ env.EVIDENCE_DIR }}
+          if-no-files-found: error
           retention-days: 14
 
       - name: Remove installed Snap
         if: always()
-        run: sudo snap remove wireshark || true
+        run: sudo snap remove --purge wireshark || true
 
   cleanup:
     name: Cleanup stage
