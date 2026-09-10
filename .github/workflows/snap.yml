@@ -152,7 +152,7 @@ jobs:
           grep -E '^MimeType=.*application/vnd.tcpdump.pcap' "$SNAP_ROOT/usr/share/applications/org.wireshark.Wireshark.desktop"
           test -x "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/wireshark/plugins/4.6.8/epan/ethercat.so" || \
             find "$SNAP_ROOT/usr/lib" -path '*/wireshark/plugins/*' -type f -print -quit | grep .
-          find "$SNAP_ROOT/usr/lib" -path '*/wireshark/extcap/*' -type f -print -quit | grep .
+          find "$SNAP_ROOT/usr" -path '*/wireshark/extcap/*' -type f -print -quit | grep .
 
       - name: Parse deterministic pcapng fixture
         shell: bash
