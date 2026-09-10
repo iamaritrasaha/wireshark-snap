@@ -111,13 +111,14 @@ The current cloud smoke workflow is designed to produce evidence for:
 The package is not security-accepted merely because it compiles or because a
 synthetic capture-file test passes.
 
-Runs 34490796508, 34500118063, and 34502880292 built, installed, and removed
-the strict Snap, with smoke testing verifying the GUI under strict confinement
-and mapping CLI runtime shared library and platform dependency requirements
-(`libwireshark.so.19`, `libcares.so.2`, `libxml2.so.2`). The complete library
-search paths (including the `$SNAP/kf6` platform content tree) and staged
-dependencies are being verified in cloud CI before any offline-dissection or
-live-capture checks can be treated as completed evidence.
+[GitHub Actions run 34511130169](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34511130169)
+completed end-to-end verification of the strict Snap package on disposable
+GitHub-hosted runners. The evidence artifact
+`wireshark-smoke-evidence-a134c5c5e451040dac5785e6d690637781ccc70c` establishes:
+
+- **Unprivileged execution**: `dumpcap` mode is `755`, ownership is `root:root`, execution identity is `uid=1001(runner)`, no files have setuid/setgid bits (`setid-files.txt` is empty), and no Linux capabilities are stored (`file-capabilities.txt` is empty).
+- **Offline dissection & parsing**: All offline dissection, file conversion (`editcap`), file merging (`mergecap`), packet reordering (`reordercap`), and text import (`text2pcap`) succeed without network or raw socket access.
+- **Strict confinement posture**: Under strict confinement without super-privileged interfaces (`network-control`, `network-observe`), `dumpcap -D` and `tshark -D` correctly fail with `getifaddrs: Operation not permitted`, emitting expected kernel AppArmor denials (`apparmor-denials.txt`) while leaving the application running safely. No privileged plugs were added to bypass strict confinement.
 
 ## References
 

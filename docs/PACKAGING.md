@@ -242,23 +242,17 @@ Store process.
 
 ## Current CI evidence
 
-[GitHub Actions run 34490796508](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34490796508),
-[run 34500118063](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34500118063), and
-[run 34502880292](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34502880292)
-verified the signed upstream manifest, built the source successfully, uploaded
-`wireshark_4.6.8_amd64.snap`, and installed and removed that exact artifact on
-a fresh runner. The GUI `--version` check reported Wireshark 4.6.8 with Qt
-6.11.1. Smoke testing then uncovered the CLI runtime dynamic linking structure:
-because the `kde-neon-6` extension attaches the `kf6-core24` platform snap at
-`$SNAP/kf6` and deduplicates platform libraries from the Snap root, CLI apps
-require `LD_LIBRARY_PATH` to encompass both `$SNAP/usr/lib...` and `$SNAP/kf6/usr/lib...`
-to access platform-supplied libraries (e.g. `libxml2.so.2`) without launching
-the GUI desktop wrapper. In addition, `libc-ares2` is staged directly for
-asynchronous DNS resolution.
+[GitHub Actions run 34511130169](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34511130169)
+(commit `a134c5c`) successfully validated, built, installed, and smoke-tested
+the complete Snap artifact across all stages:
 
-The manifest configures these comprehensive runtime paths and Wireshark
-directory variables (`WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, `WIRESHARK_EXTCAP_DIR`)
-across all applications. Full verification proceeds in cloud CI.
+- **Build artifact**: `wireshark_4.6.8_amd64.snap` (295,096,320 bytes, SHA-256: `58060fbb500af2101f3acfc9859eaef7bdd18cdf3f8551258b1866ecf62cd51b`)
+- **Installation on fresh runner**: Verified installation, layout, and automatic connection of standard interfaces (`desktop`, `wayland`, `x11`, `home`, `network`, `network-bind`, `opengl`, `audio-playback`, and KDE Neon content snaps).
+- **Execution and versioning**: Verified `wireshark` (Qt 6.11.1), `tshark`, `dumpcap`, `capinfos`, `editcap`, `mergecap`, `text2pcap`, and `reordercap` all report 4.6.8.
+- **Protocol & plugin loading**: Verified built-in protocols (`eth`, `ip`, `udp`) and staged binary plugins (`ethercat.so` dissector, etc.) and extcap helpers (`ciscodump`, `sshdump`, `udpdump`, `wifidump`, `randpktdump`, `dpauxmon`).
+- **Capture-file manipulation**: Verified pcapng/pcap reading, field extraction, file conversion with `editcap`, stream merging with `mergecap`, reordering with `reordercap`, and generation with `text2pcap`.
+- **Headless GUI execution**: Verified `wireshark -r minimal.pcapng` under Xvfb starts cleanly and opens the capture file without errors.
+- **Strict confinement behavior**: Tested interface enumeration (`dumpcap -D`, `tshark -D`); confirmed that in strict confinement without super-privileged interfaces, raw interface enumeration fails with `getifaddrs: Operation not permitted`, triggering kernel AppArmor denials, without breaking offline dissection. All evidence was archived in `wireshark-smoke-evidence-a134c5c5e451040dac5785e6d690637781ccc70c`.
 
 ## Update strategy
 
