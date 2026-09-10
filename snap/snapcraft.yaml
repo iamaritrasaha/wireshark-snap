@@ -87,14 +87,14 @@ parts:
       - libcurl4-openssl-dev
       - liblua5.4-dev
     stage-packages:
-      - libpcap0.8
-      - libglib2.0-0
+      - libpcap0.8t64
+      - libglib2.0-0t64
       - libgcrypt20
-      - libgnutls30
+      - libgnutls30t64
       - liblz4-1
       - libmaxminddb0
       - libnghttp2-14
-      - libnghttp3-0
+      - libnghttp3-3
       - libpcre2-8-0
       - libsnappy1v5
       - libspeexdsp1
