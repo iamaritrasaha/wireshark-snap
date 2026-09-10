@@ -233,6 +233,33 @@ kernel AppArmor observations. Interface enumeration and a bounded loopback
 capture are recorded as evidence; an unavailable capture path is reported as
 a strict-CI limitation rather than converted into a privileged package.
 
+Snap app commands other than the primary GUI are invoked as
+`wireshark.tshark`, `wireshark.dumpcap`, `wireshark.capinfos`,
+`wireshark.editcap`, `wireshark.mergecap`, `wireshark.text2pcap`, and
+`wireshark.reordercap`. Unqualified aliases are intentionally not requested:
+default aliases require Snap Store review and this project has not entered the
+Store process.
+
+## Current CI evidence
+
+[GitHub Actions run 34490796508](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34490796508)
+verified the signed upstream manifest, built the source successfully, uploaded
+`wireshark_4.6.8_amd64.snap`, and installed and removed that exact artifact on
+a fresh runner. The GUI `--version` check reported Wireshark 4.6.8 with Qt
+6.11.1. The smoke job then exposed a CLI launch defect: the qualified TShark
+app could not locate the staged `libwireshark.so.19` because CLI apps do not
+inherit the KDE extension's GUI runtime environment.
+
+The manifest now gives each CLI app a Snap-local `LD_LIBRARY_PATH` and
+`PATH`, and sets `WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, and
+`WIRESHARK_EXTCAP_DIR` across GUI and CLI apps so Wireshark can locate
+staged shared libraries, dissector plugins, configuration files, and extcap
+helpers inside `$SNAP`. This post-run correction has not been rebuilt or
+runtime-proven. Consequently the artifact from run 34490796508 is build/install
+evidence, not the completed smoke-test milestone; dissector, plugin,
+capture-file, interface-enumeration, and live-capture checks remain pending on
+the corrected revision.
+
 ## Update strategy
 
 Until reproducible packaging and acceptance tests exist, updates are manual:

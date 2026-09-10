@@ -95,7 +95,7 @@ unreviewed third-party binary, or publish to the Snap Store.
 
 ## Required future verification
 
-The current cloud smoke workflow produces evidence for:
+The current cloud smoke workflow is designed to produce evidence for:
 
 - source archive provenance and checksum;
 - `snapcraft lint` with no unexplained errors;
@@ -110,6 +110,12 @@ The current cloud smoke workflow produces evidence for:
 
 The package is not security-accepted merely because it compiles or because a
 synthetic capture-file test passes.
+
+Run 34490796508 built, installed, and removed the strict Snap, but its smoke
+job stopped at the first CLI runtime-linker failure. The manifest's subsequent
+Snap-local library-path correction still requires one complete cloud run
+before any of the unexecuted offline-dissection or live-capture checks can be
+treated as evidence.
 
 ## References
 

@@ -123,40 +123,86 @@ apps:
     command: usr/bin/wireshark
     desktop: usr/share/applications/org.wireshark.Wireshark.desktop
     common-id: org.wireshark.Wireshark
+    environment:
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   tshark:
     command: usr/bin/tshark
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   dumpcap:
     command: usr/bin/dumpcap
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   capinfos:
     command: usr/bin/capinfos
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   editcap:
     command: usr/bin/editcap
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   mergecap:
     command: usr/bin/mergecap
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   text2pcap:
     command: usr/bin/text2pcap
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
 
   reordercap:
     command: usr/bin/reordercap
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
+      WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
+      WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
+      WIRESHARK_EXTCAP_DIR: $SNAP/usr/libexec/wireshark/extcap
     plugs:
       - home
