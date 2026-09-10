@@ -18,9 +18,6 @@ base: core24
 grade: devel
 confinement: strict
 
-extensions:
-  - kde-neon-6
-
 platforms:
   amd64:
     build-on: amd64
@@ -121,6 +118,8 @@ parts:
 
 apps:
   wireshark:
+    extensions:
+      - kde-neon-6
     command: usr/bin/wireshark
     desktop: wireshark.desktop
     common-id: org.wireshark.Wireshark

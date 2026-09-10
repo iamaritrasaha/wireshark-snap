@@ -116,11 +116,11 @@ the Qt 6 desktop application:
 - the extension is designed for C++ Qt/KDE applications and supplies the
   desktop integration environment.
 
-The extension also adds content connections and application plugs for the
-desktop stack, including `desktop`, `desktop-legacy`, `opengl`, `wayland`,
-`x11`, `audio-playback`, `unity7`, `network`, and `network-bind`. The
-implementation must inspect `snapcraft expand-extensions` output before
-adding any duplicate manual plugs.
+The extension is attached to the GUI app and adds content connections and
+application plugs for the desktop stack, including `desktop`,
+`desktop-legacy`, `opengl`, `wayland`, `x11`, `audio-playback`, `unity7`,
+`network`, and `network-bind`. The implementation must inspect
+`snapcraft expand-extensions` output before adding any duplicate manual plugs.
 
 This is a GUI/runtime suitability decision, not a packet-capture decision.
 The extension does not grant raw network capture privileges, does not make

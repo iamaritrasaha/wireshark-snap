@@ -35,7 +35,7 @@ jobs:
           checksum = data.dig("parts", "wireshark", "source-checksum")
           expected = "sha256/c0f1ccf217bc0d3b51a9c03ea178b0f7df682e475da26a2d21cd4a1bdd9579d0"
           raise "source checksum is not pinned" unless checksum == expected
-          raise "official Qt integration is missing" unless data.fetch("extensions").include?("kde-neon-6")
+          raise "official Qt integration is missing" unless data.dig("apps", "wireshark", "extensions").include?("kde-neon-6")
           %w[wireshark tshark dumpcap capinfos editcap mergecap text2pcap reordercap].each do |app|
             raise "missing app #{app}" unless data.fetch("apps").key?(app)
           end
