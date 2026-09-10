@@ -121,7 +121,7 @@ apps:
     extensions:
       - kde-neon-6
     command: usr/bin/wireshark
-    desktop: wireshark.desktop
+    desktop: usr/share/applications/org.wireshark.Wireshark.desktop
     common-id: org.wireshark.Wireshark
     plugs:
       - home
