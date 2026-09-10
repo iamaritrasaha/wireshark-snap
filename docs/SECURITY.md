@@ -111,11 +111,12 @@ The current cloud smoke workflow is designed to produce evidence for:
 The package is not security-accepted merely because it compiles or because a
 synthetic capture-file test passes.
 
-Run 34490796508 built, installed, and removed the strict Snap, but its smoke
-job stopped at the first CLI runtime-linker failure. The manifest's subsequent
-Snap-local library-path correction still requires one complete cloud run
-before any of the unexecuted offline-dissection or live-capture checks can be
-treated as evidence.
+Runs 34490796508 and 34500118063 built, installed, and removed the strict Snap,
+with smoke testing verifying the GUI under strict confinement and identifying
+missing CLI runtime shared libraries (`libwireshark.so.19`, `libcares.so.2`).
+The manifest's library search path and stage-package corrections (`libc-ares2`)
+are being verified in cloud CI before any offline-dissection or live-capture
+checks can be treated as completed evidence.
 
 ## References
 

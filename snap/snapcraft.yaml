@@ -86,6 +86,7 @@ parts:
       - libxxhash-dev
       - libcurl4-openssl-dev
       - liblua5.4-dev
+      - libc-ares-dev
     stage-packages:
       - libpcap0.8t64
       - libglib2.0-0t64
@@ -105,12 +106,14 @@ parts:
       - libcap2
       - libnl-3-200
       - libnl-genl-3-200
+      - libnl-route-3-200
       - libopus0
       - libkrb5-3
       - libminizip1t64
       - libxxhash0
       - libcurl4t64
       - liblua5.4-0
+      - libc-ares2
       - python3
       - python3-requests
       - libqt6svg6

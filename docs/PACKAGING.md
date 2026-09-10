@@ -243,22 +243,20 @@ Store process.
 ## Current CI evidence
 
 [GitHub Actions run 34490796508](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34490796508)
+and [run 34500118063](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34500118063)
 verified the signed upstream manifest, built the source successfully, uploaded
 `wireshark_4.6.8_amd64.snap`, and installed and removed that exact artifact on
 a fresh runner. The GUI `--version` check reported Wireshark 4.6.8 with Qt
-6.11.1. The smoke job then exposed a CLI launch defect: the qualified TShark
-app could not locate the staged `libwireshark.so.19` because CLI apps do not
-inherit the KDE extension's GUI runtime environment.
+6.11.1. Smoke testing then exposed CLI runtime linkage requirements: CLI apps
+require a Snap-local `LD_LIBRARY_PATH` and `PATH`, directory environment variables
+(`WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, `WIRESHARK_EXTCAP_DIR`), and the
+asynchronous DNS resolver library `libc-ares2` (linking `libcares.so.2`), which
+CMake discovers from the SDK environment during compilation.
 
-The manifest now gives each CLI app a Snap-local `LD_LIBRARY_PATH` and
-`PATH`, and sets `WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, and
-`WIRESHARK_EXTCAP_DIR` across GUI and CLI apps so Wireshark can locate
-staged shared libraries, dissector plugins, configuration files, and extcap
-helpers inside `$SNAP`. This post-run correction has not been rebuilt or
-runtime-proven. Consequently the artifact from run 34490796508 is build/install
-evidence, not the completed smoke-test milestone; dissector, plugin,
-capture-file, interface-enumeration, and live-capture checks remain pending on
-the corrected revision.
+The manifest now gives each CLI app the required library search paths, stages
+`libc-ares2` and `libnl-route-3-200`, and sets the Wireshark directory environment
+variables across all apps. Full verification across dissectors, plugins,
+offline capture-file parsing, and interface enumeration proceeds in cloud CI.
 
 ## Update strategy
 
