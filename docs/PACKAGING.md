@@ -3,9 +3,9 @@
 This repository contains preparation notes for a community-maintained Snap
 package for Wireshark. It is not an official Wireshark Foundation repository.
 
-This document is deliberately preparation-only. There is no
-`snapcraft.yaml`, no GitHub Actions workflow, and no locally built or installed
-Wireshark artifact in this repository.
+The implementation is in `snap/snapcraft.yaml` and the cloud-only verification
+pipeline is in `.github/workflows/snap.yml`. No Wireshark or generated Snap
+artifact is built or installed on the development machine.
 
 Research below was checked against official Wireshark and Snapcraft sources on
 2026-09-10.
@@ -30,8 +30,9 @@ lists the archive as a 54 MiB file last modified on that date.
 The checksum above is transcribed from the Foundation-hosted, PGP-signed
 manifest. The implementation must download the archive from the official
 source URL, verify the manifest/signature using the published Wireshark public
-key, and independently run `sha256sum` before the archive is accepted. This
-preparation task intentionally did not download or build the archive.
+key, and independently run `sha256sum` before the archive is accepted. The
+local preparation phase did not download or build the archive; the cloud
+workflow now obtains it only during the disposable Snapcraft build.
 
 For a downstream release package, use the official source archive rather than
 an arbitrary Git snapshot. The upstream Developer's Guide explicitly
@@ -76,9 +77,10 @@ For Snapcraft, keep the distinction clear:
 - source archives and their checksums are pinned inputs, not an implicit Git
   checkout.
 
-The exact package list must be derived from the 4.6.8 CMake configuration and
-the resulting staged ELF dependencies. Do not guess a package list from an
-older Debian packaging recipe.
+The initial manifest derives its CMake switches from the 4.6.8 release and
+keeps build-only inputs in `build-packages`. Runtime libraries are listed in
+`stage-packages`; CI checks the resulting staged ELF/runtime layout and can
+extend the closure when the cloud build exposes a real missing dependency.
 
 ## Qt 6 requirements
 
@@ -98,10 +100,10 @@ requirements justify it. The final Snap build must also account for the
 non-Qt libraries required by Wireshark, including GLib and libpcap, plus any
 features intentionally enabled.
 
-The Qt version must be selected by the build environment, not by silently
-using the host's Qt installation. The implementation must record the resolved
-Qt version and confirm that the runtime libraries used by Wireshark come from
-the selected Snap build/runtime inputs.
+The manifest explicitly selects `USE_qt6=ON` and uses the `kde-neon-6`
+extension for the Qt desktop runtime. The implementation must record the
+resolved Qt version and confirm that the runtime libraries used by Wireshark
+come from the selected Snap build/runtime inputs.
 
 ## Base and KDE neon 6 extension
 
@@ -135,7 +137,7 @@ classic confinement as a shortcut, and must not ship a fake or invented
 the desktop entry is implemented; the upstream desktop ID is
 `org.wireshark.Wireshark`.
 
-The first implementation must separate these acceptance levels:
+The implementation separates these acceptance levels:
 
 1. GUI launch and offline capture-file analysis.
 2. Command-line dissection and file utilities.
@@ -178,7 +180,7 @@ only what a tested feature needs:
 | --- | --- | --- |
 | `desktop`, `desktop-legacy`, `wayland`, `x11`, `opengl` | Use the KDE neon 6 extension surface | GUI integration; avoid duplicate declarations until expansion is inspected |
 | `network` | Use only for client network access actually used by the app | Auto-connected and does not provide raw capture |
-| `home` | Add to the GUI app if users must open/save non-hidden files in `$HOME` | File access for normal user documents and capture files |
+| `home` | Requested by the GUI and file-oriented CLI apps | File access for normal user documents and capture files |
 | `network-observe` | Do not add initially | Read-only network status is not packet capture and is not needed until a concrete feature proves it |
 | `network-control` | Do not add initially; test only as a narrowly scoped capture hypothesis | Broad, privileged networking access; auto-connect is off and Store review may be required |
 | `process-control`, `pstore`, `removable-media`, `raw-usb`, `system-observe` | Do not add initially | No current requirement in the preparation scope |
@@ -191,8 +193,8 @@ the smallest affected app, and a Store-review justification.
 
 ## Planned commands and utilities
 
-These are implementation and verification commands, not commands to run in
-this preparation task:
+These are the commands exposed or used by the implementation and its cloud
+verification workflow:
 
 ### Source and reproducibility
 
@@ -207,8 +209,8 @@ this preparation task:
 - `snapcraft extensions` to confirm available extension/base combinations;
 - `snapcraft expand-extensions` to audit the generated interface/content
   surface;
-- `snapcraft lint` and `snapcraft pack` once a project file exists;
-- `snap try` for local confined testing, with no Store publication;
+- `snapcraft lint` and `snapcraft pack` in the cloud build;
+- `sudo snap install <file>.snap --dangerous` only on a disposable CI runner;
 - `snap connections <snap-name>` to record actual interface connections;
 - `snappy-debug` or equivalent journal/AppArmor inspection to identify
   denials, without treating a devmode run as acceptance evidence.
@@ -223,6 +225,13 @@ this preparation task:
 - `readelf`, `ldd`, and `file` to audit staged binaries and runtime linkage;
 - `getcap` and `stat` to prove that no unreviewed privilege bit or capability
   was smuggled into the package.
+
+The workflow also generates a deterministic Ethernet/IPv4/UDP pcapng fixture,
+checks `tshark` fields and dissector registration, exercises the file utility
+commands, starts the GUI under Xvfb, records `snap connections`, and inspects
+kernel AppArmor observations. Interface enumeration and a bounded loopback
+capture are recorded as evidence; an unavailable capture path is reported as
+a strict-CI limitation rather than converted into a privileged package.
 
 ## Update strategy
 
@@ -244,8 +253,9 @@ use progressive release for a first or high-risk stable update. Snapd then
 refreshes installed Store snaps automatically according to the user's refresh
 policy.
 
-Do not add an update bot, GitHub Actions workflow, Store credentials, or
-publication command as part of this preparation task.
+The current workflow does not contain Store credentials or publication
+commands. It builds and uploads a CI artifact only; it does not register a
+Store name, upload to the Store, or release any channel.
 
 ## Source references
 
@@ -256,6 +266,9 @@ publication command as part of this preparation task.
 - [Wireshark Developer's Guide: Qt](https://www.wireshark.org/docs/wsdg_html_chunked/ChLibsQt.html)
 - [Wireshark Developer's Guide: binary packaging and privileges](https://www.wireshark.org/docs/wsdg_html_chunked/ChSrcBinary.html)
 - [Snapcraft KDE neon extensions](https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/kde-neon-extensions/)
+- [Snapcraft source checksums](https://documentation.ubuntu.com/snapcraft/stable/reference/snapcraft-yaml/)
+- [Snapcraft CMake plugin](https://documentation.ubuntu.com/snapcraft/en/latest/common/craft-parts/reference/plugins/cmake_plugin/)
+- [Canonical Snapcraft build action](https://github.com/canonical/action-build)
 - [Snap strict-confinement security policies](https://snapcraft.io/docs/explanation/security/security-policies/)
 - [Snap interfaces reference](https://snapcraft.io/docs/reference/interfaces/)
 - [Snap network interface](https://snapcraft.io/docs/reference/interfaces/network-interface/)

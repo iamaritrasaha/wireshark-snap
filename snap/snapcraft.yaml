@@ -1,0 +1,163 @@
+name: wireshark
+title: Wireshark
+version: '4.6.8'
+summary: Network protocol analyzer
+description: |
+  Wireshark is a network protocol analyzer maintained by the Wireshark
+  Foundation and contributors. This is a community-maintained Snap package
+  built from the official Wireshark 4.6.8 source archive.
+
+  The GUI and offline analysis tools run as ordinary users. Live packet capture
+  remains subject to the interfaces and privilege model available to strict
+  Snaps; this package does not run Wireshark or TShark as root.
+website: https://www.wireshark.org/
+contact: https://github.com/iamaritrasaha/wireshark-snap/issues
+license: GPL-2.0-or-later
+icon: usr/share/icons/hicolor/256x256/apps/org.wireshark.Wireshark.png
+base: core24
+grade: devel
+confinement: strict
+
+extensions:
+  - kde-neon-6
+
+platforms:
+  amd64:
+    build-on: amd64
+    build-for: amd64
+
+parts:
+  wireshark:
+    source: https://www.wireshark.org/download/src/wireshark-4.6.8.tar.xz
+    source-type: tar
+    source-checksum: sha256/c0f1ccf217bc0d3b51a9c03ea178b0f7df682e475da26a2d21cd4a1bdd9579d0
+    plugin: cmake
+    cmake-generator: Ninja
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DUSE_qt6=ON
+      - -DENABLE_PCAP=ON
+      - -DENABLE_PLUGINS=ON
+      - -DDUMPCAP_INSTALL_OPTION=normal
+      - -DENABLE_SMI=OFF
+      - -DENABLE_SBC=OFF
+      - -DENABLE_SPANDSP=OFF
+      - -DENABLE_BCG729=OFF
+      - -DENABLE_AMRNB=OFF
+      - -DENABLE_ILBC=OFF
+      - -DENABLE_SINSP=OFF
+      - -DENABLE_WERROR=OFF
+    build-packages:
+      - build-essential
+      - bison
+      - flex
+      - ninja-build
+      - python3
+      - perl
+      - pkg-config
+      - asciidoctor
+      - docbook-xml
+      - docbook-xsl
+      - xsltproc
+      - qt6-base-dev
+      - qt6-tools-dev
+      - qt6-tools-dev-tools
+      - libqt6svg6-dev
+      - qt6-multimedia-dev
+      - libglib2.0-dev
+      - libpcap-dev
+      - libgcrypt20-dev
+      - libgnutls28-dev
+      - liblz4-dev
+      - libmaxminddb-dev
+      - libnghttp2-dev
+      - libnghttp3-dev
+      - libpcre2-dev
+      - libsnappy-dev
+      - libspeexdsp-dev
+      - libssh-dev
+      - libxml2-dev
+      - libzstd-dev
+      - libbrotli-dev
+      - libcap-dev
+      - libnl-3-dev
+      - libnl-genl-3-dev
+      - libopus-dev
+      - libkrb5-dev
+      - libminizip-dev
+      - libxxhash-dev
+      - libcurl4-openssl-dev
+      - liblua5.4-dev
+    stage-packages:
+      - libpcap0.8
+      - libglib2.0-0
+      - libgcrypt20
+      - libgnutls30
+      - liblz4-1
+      - libmaxminddb0
+      - libnghttp2-14
+      - libnghttp3-0
+      - libpcre2-8-0
+      - libsnappy1v5
+      - libspeexdsp1
+      - libssh-4
+      - libxml2
+      - libzstd1
+      - libbrotli1
+      - libcap2
+      - libnl-3-200
+      - libnl-genl-3-200
+      - libopus0
+      - libkrb5-3
+      - libminizip1t64
+      - libxxhash0
+      - libcurl4t64
+      - liblua5.4-0
+      - python3
+      - python3-requests
+      - libqt6svg6
+      - libqt6multimedia6
+
+apps:
+  wireshark:
+    command: usr/bin/wireshark
+    desktop: wireshark.desktop
+    common-id: org.wireshark.Wireshark
+    plugs:
+      - home
+
+  tshark:
+    command: usr/bin/tshark
+    plugs:
+      - home
+
+  dumpcap:
+    command: usr/bin/dumpcap
+    plugs:
+      - home
+
+  capinfos:
+    command: usr/bin/capinfos
+    plugs:
+      - home
+
+  editcap:
+    command: usr/bin/editcap
+    plugs:
+      - home
+
+  mergecap:
+    command: usr/bin/mergecap
+    plugs:
+      - home
+
+  text2pcap:
+    command: usr/bin/text2pcap
+    plugs:
+      - home
+
+  reordercap:
+    command: usr/bin/reordercap
+    plugs:
+      - home

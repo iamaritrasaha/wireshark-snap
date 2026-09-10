@@ -89,12 +89,13 @@ For every upstream update:
 5. Keep build-only and runtime dependencies distinct.
 6. Inspect the staged file list and ELF dependencies before packaging.
 
-No GitHub Actions, update bot, or unreviewed third-party binary download is
-part of the current plan.
+The GitHub Actions workflow uses the official source URL and Snapcraft source
+checksum during the cloud build. It does not store credentials, download an
+unreviewed third-party binary, or publish to the Snap Store.
 
 ## Required future verification
 
-Before a first Store submission, Qwen should produce evidence for:
+The current cloud smoke workflow produces evidence for:
 
 - source archive provenance and checksum;
 - `snapcraft lint` with no unexplained errors;

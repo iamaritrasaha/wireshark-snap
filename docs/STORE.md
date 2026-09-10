@@ -13,7 +13,7 @@ maintained and does not represent the Wireshark Foundation.
 | Initial upstream target | Wireshark `4.6.8` |
 | Snap Store name | Not registered or assumed here |
 | Store credentials | Not added to the repository |
-| GitHub Actions | Not created |
+| GitHub Actions | Builds/tests a CI-only artifact; no Store publication |
 
 The Store name is globally unique and must be registered separately when
 publication is authorized. Do not imply that the repository name guarantees
@@ -50,13 +50,13 @@ be requested for convenience.
 
 ## Pre-submission checklist
 
-- [ ] `snapcraft.yaml` is created in a later, explicitly authorized change.
+- [x] `snapcraft.yaml` uses the pinned source archive and strict confinement.
 - [ ] The source archive, signed manifest, version, and SHA-256 are pinned.
 - [ ] Upstream Wireshark and third-party licenses are preserved and reviewed.
 - [ ] The upstream desktop entry and icons are used without inventing an
       application ID.
 - [ ] Build-only dependencies are not shipped in the runtime payload.
-- [ ] `snapcraft expand-extensions` output is reviewed.
+- [ ] Expanded extension output is reviewed against the completed cloud build.
 - [ ] `snapcraft lint` is clean or every warning is explained.
 - [ ] Strict GUI and offline-analysis tests pass as an ordinary user.
 - [ ] `dumpcap` privilege behavior is tested and documented honestly.
@@ -81,8 +81,8 @@ sequence is:
    for a high-risk first release or privilege change.
 6. Test installation from the Store on a host other than the build host.
 
-Do not upload, release, request Store approval, or publish while this
-preparation-only phase is in effect.
+Do not upload, release, request Store approval, or publish from the current
+CI-only implementation.
 
 ## Update policy
 

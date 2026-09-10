@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Wireshark
+GenericName=Network Analyzer
+Comment=Network traffic analyzer
+Icon=org.wireshark.Wireshark
+TryExec=wireshark
+Exec=wireshark %F
+Terminal=false
+Categories=Network;Monitor;Qt;
+MimeType=application/vnd.tcpdump.pcap;application/x-pcapng;
