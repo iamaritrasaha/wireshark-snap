@@ -136,7 +136,7 @@ apps:
   tshark:
     command: usr/bin/tshark
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -147,7 +147,7 @@ apps:
   dumpcap:
     command: usr/bin/dumpcap
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -158,7 +158,7 @@ apps:
   capinfos:
     command: usr/bin/capinfos
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -169,7 +169,7 @@ apps:
   editcap:
     command: usr/bin/editcap
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -180,7 +180,7 @@ apps:
   mergecap:
     command: usr/bin/mergecap
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -191,7 +191,7 @@ apps:
   text2pcap:
     command: usr/bin/text2pcap
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins
@@ -202,7 +202,7 @@ apps:
   reordercap:
     command: usr/bin/reordercap
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/kf6/usr/lib/x86_64-linux-gnu:$SNAP/kf6/usr/lib:$SNAP/kf6/lib/x86_64-linux-gnu:$SNAP/kf6/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       PATH: $SNAP/usr/bin:$SNAP/usr/sbin${PATH:+:$PATH}
       WIRESHARK_DATA_DIR: $SNAP/usr/share/wireshark
       WIRESHARK_PLUGIN_DIR: $SNAP/usr/lib/x86_64-linux-gnu/wireshark/plugins

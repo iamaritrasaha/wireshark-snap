@@ -242,21 +242,23 @@ Store process.
 
 ## Current CI evidence
 
-[GitHub Actions run 34490796508](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34490796508)
-and [run 34500118063](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34500118063)
+[GitHub Actions run 34490796508](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34490796508),
+[run 34500118063](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34500118063), and
+[run 34502880292](https://github.com/iamaritrasaha/wireshark-snap/actions/runs/34502880292)
 verified the signed upstream manifest, built the source successfully, uploaded
 `wireshark_4.6.8_amd64.snap`, and installed and removed that exact artifact on
 a fresh runner. The GUI `--version` check reported Wireshark 4.6.8 with Qt
-6.11.1. Smoke testing then exposed CLI runtime linkage requirements: CLI apps
-require a Snap-local `LD_LIBRARY_PATH` and `PATH`, directory environment variables
-(`WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, `WIRESHARK_EXTCAP_DIR`), and the
-asynchronous DNS resolver library `libc-ares2` (linking `libcares.so.2`), which
-CMake discovers from the SDK environment during compilation.
+6.11.1. Smoke testing then uncovered the CLI runtime dynamic linking structure:
+because the `kde-neon-6` extension attaches the `kf6-core24` platform snap at
+`$SNAP/kf6` and deduplicates platform libraries from the Snap root, CLI apps
+require `LD_LIBRARY_PATH` to encompass both `$SNAP/usr/lib...` and `$SNAP/kf6/usr/lib...`
+to access platform-supplied libraries (e.g. `libxml2.so.2`) without launching
+the GUI desktop wrapper. In addition, `libc-ares2` is staged directly for
+asynchronous DNS resolution.
 
-The manifest now gives each CLI app the required library search paths, stages
-`libc-ares2` and `libnl-route-3-200`, and sets the Wireshark directory environment
-variables across all apps. Full verification across dissectors, plugins,
-offline capture-file parsing, and interface enumeration proceeds in cloud CI.
+The manifest configures these comprehensive runtime paths and Wireshark
+directory variables (`WIRESHARK_DATA_DIR`, `WIRESHARK_PLUGIN_DIR`, `WIRESHARK_EXTCAP_DIR`)
+across all applications. Full verification proceeds in cloud CI.
 
 ## Update strategy
 
