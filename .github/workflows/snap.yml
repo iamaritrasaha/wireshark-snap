@@ -277,7 +277,7 @@ jobs:
           mkdir -p "$EVIDENCE_DIR/gui-home" "$EVIDENCE_DIR/gui-config"
           set +e
           timeout --signal=TERM 12s xvfb-run -a env HOME="$EVIDENCE_DIR/gui-home" \
-            XDG_CONFIG_HOME="$EVIDENCE_DIR/gui-config" wireshark --no-splash \
+            XDG_CONFIG_HOME="$EVIDENCE_DIR/gui-config" wireshark \
             -r "$EVIDENCE_DIR/minimal.pcapng" >"$EVIDENCE_DIR/wireshark-gui.log" 2>&1
           status=$?
           set -e
