@@ -128,35 +128,49 @@ apps:
 
   tshark:
     command: usr/bin/tshark
+    aliases:
+      - tshark
     plugs:
       - home
 
   dumpcap:
     command: usr/bin/dumpcap
+    aliases:
+      - dumpcap
     plugs:
       - home
 
   capinfos:
     command: usr/bin/capinfos
+    aliases:
+      - capinfos
     plugs:
       - home
 
   editcap:
     command: usr/bin/editcap
+    aliases:
+      - editcap
     plugs:
       - home
 
   mergecap:
     command: usr/bin/mergecap
+    aliases:
+      - mergecap
     plugs:
       - home
 
   text2pcap:
     command: usr/bin/text2pcap
+    aliases:
+      - text2pcap
     plugs:
       - home
 
   reordercap:
     command: usr/bin/reordercap
+    aliases:
+      - reordercap
     plugs:
       - home
