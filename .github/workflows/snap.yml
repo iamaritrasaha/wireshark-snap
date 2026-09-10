@@ -240,7 +240,7 @@ jobs:
               '$3 == protocol {found = 1} END {exit !found}' "$EVIDENCE_DIR/protocols.txt"
           done
           wireshark.tshark -G plugins | tee "$EVIDENCE_DIR/plugins.txt"
-          awk -F '\t' '$1 == "ethercat.so" && $3 == "dissector" {found = 1} END {exit !found}' \
+          awk -F '\t' '{gsub(/[[:space:]]+$/, "", $1); gsub(/^[[:space:]]+/, "", $3); gsub(/[[:space:]]+$/, "", $3)} $1 == "ethercat.so" && $3 == "dissector" {found = 1} END {exit !found}' \
             "$EVIDENCE_DIR/plugins.txt"
 
           wireshark.capinfos "$FIXTURE" | tee "$EVIDENCE_DIR/capinfos-pcapng.txt"
