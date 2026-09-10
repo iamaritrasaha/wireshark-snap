@@ -1,0 +1,70 @@
+# Snap Build Artifacts and Temp Files
+
+# Compiled binaries
+bin/
+build/
+*.snap
+*.snap.old
+old-snap/*
+
+# Makefile outputs from debuild
+Makefile.out
+Makefile.tmp
+output.log
+make.log
+*.o
+*.la
+
+# Build directories used by debuild.sh
+debhelper/
+debian-deb-build/*
+*.orig.tar.gz
+*.changes
+*.dsc
+*.orig.*
+*.tar.gz
+*_source.*
+*/build
+*/build-stamp
+
+# Generated package files
+*-amd64.deb
+*-arm64.deb
+*-all.deb
+debian-binary/
+
+# Snapcraft cache and generated artifacts
+.cache/
+snap/local/
+.snapcraft.yaml.relocatable
+install.log
+
+# Editor IDE build outputs
+.vscode/
+.idea/
+
+# Coverage reports (if running tests)
+coverage/
+htmlcov/
+
+# OS-specific temporary files
+/tmp/wireshark-build-*
+*.tmp
+*_source.*
+
+# Docker image layers (if used in future)
+snap.docker.io/
+.docker/
+
+# Caching packages for debuilds
+cache/*
+*/debian/cache/*
+
+# Package manager cache
+/var/tmp/snaps/*/var/tmp/
+
+# Snapcraft linting outputs
+lint.log
+
+# Generated icons or localized strings with 'pot' extensions that will be processed
+*.pot
